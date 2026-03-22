@@ -10,7 +10,7 @@ load_dotenv()
 
 from google import genai
 from google.genai import types
-from llama_index.core import StorageContext, load_index_from_storage, Settings
+from llama_index.core import StorageContext, load_index_from_storage, Settings, Document
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.gemini import Gemini
@@ -197,3 +197,30 @@ Vui long tong hop thong tin tren va tra loi cau hoi cua nhan vien.
             )
         )
         return response.text
+
+# ==========================================
+# 4. ADD KNOWLEDGE TO VECTOR DB DYNAMICALLY
+# ==========================================
+def add_knowledge_to_vector_db(knowledge_text: str) -> bool:
+    """
+    Add new knowledge document to the existing Vector Database
+    This is used when admin approves a feedback submission
+    """
+    try:
+        # Load existing index
+        storage_context = StorageContext.from_defaults(persist_dir="./database/storage")
+        index = load_index_from_storage(storage_context)
+
+        # Create a new document from the knowledge text
+        new_document = Document(text=knowledge_text)
+
+        # Insert the document into the index
+        index.insert(new_document)
+
+        # Persist the updated index back to storage
+        index.storage_context.persist(persist_dir="./database/storage")
+
+        return True
+    except Exception as e:
+        print(f"Error adding knowledge to vector DB: {str(e)}")
+        raise e
