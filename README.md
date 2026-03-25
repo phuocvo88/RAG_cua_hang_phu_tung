@@ -34,7 +34,7 @@ Frontend (Next.js) ←→ Backend (FastAPI) ←→ Databases
 
 ### Installation Methods
 
-#### Option 1: Using Gradle (Recommended)
+#### Option 1: Using Gradle (Recommended - Cross-Platform)
 
 Gradle automates the entire build process for both backend and frontend.
 
@@ -44,30 +44,47 @@ Gradle automates the entire build process for both backend and frontend.
    cd RAG_cua_hang_phu_tung
    ```
 
-2. **Setup everything with one command:**
-   ```bash
-   # Windows
-   .\gradlew-fixed.bat buildAll
+2. **Initial Setup:**
 
-   # Linux/Mac
-   ./gradlew buildAll
+   **Linux/Mac:**
+   ```bash
+   # Make scripts executable
+   chmod +x setup.sh gradlew
+
+   # Run setup script (installs dependencies and creates venv)
+   ./setup.sh
    ```
 
-3. **Configure API Keys:**
-   - Create `.env` file in backend directory
+   **Windows:**
+   ```powershell
+   # Optional: Install Python 3.11 if not already installed
+   .\install_python.ps1
+   ```
+
+3. **Build everything:**
+   ```bash
+   # Linux/Mac
+   ./gradlew buildAll
+
+   # Windows
+   .\gradlew.bat buildAll
+   ```
+
+4. **Configure API Keys:**
+   - Edit `backend/.env` file (created by setup script)
    - Add your API keys:
      ```
      GOOGLE_API_KEY=your_google_key
      ANTHROPIC_API_KEY=your_anthropic_key
      ```
 
-4. **Run the application:**
+5. **Run the application:**
    ```bash
-   # Windows
-   .\gradlew-fixed.bat runAll
-
    # Linux/Mac
    ./gradlew runAll
+
+   # Windows
+   .\gradlew.bat runAll
    ```
 
 See [Gradle Usage Guide](other_information/Gradle%20Usage%20Guide.md) for detailed Gradle commands.
@@ -81,11 +98,20 @@ See [Gradle Usage Guide](other_information/Gradle%20Usage%20Guide.md) for detail
    ```
 
 2. **Setup Backend:**
+
+   **Linux/Mac:**
    ```bash
    cd backend
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+   **Windows:**
+   ```powershell
+   cd backend
    python -m venv venv
-   venv/Scripts/activate  # On Windows
-   # source venv/bin/activate  # On Linux/Mac
+   venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
@@ -96,13 +122,21 @@ See [Gradle Usage Guide](other_information/Gradle%20Usage%20Guide.md) for detail
    ```
 
 4. **Initialize Database:**
+
+   **Linux/Mac:**
    ```bash
    cd backend
    python create_feedback_table.py
    ```
 
+   **Windows:**
+   ```powershell
+   cd backend
+   python create_feedback_table.py
+   ```
+
 5. **Configure API Keys:**
-   - Create `.env` file in backend directory
+   - Create `.env` file in backend directory (copy from `.env.example`)
    - Add your API keys:
      ```
      GOOGLE_API_KEY=your_google_key
@@ -112,10 +146,21 @@ See [Gradle Usage Guide](other_information/Gradle%20Usage%20Guide.md) for detail
 ### Run the Application
 
 **Terminal 1 - Backend:**
+
+**Linux/Mac:**
 ```bash
 cd backend
-venv/Scripts/python.exe main.py
+source venv/bin/activate
+python main.py
 ```
+
+**Windows:**
+```powershell
+cd backend
+venv\Scripts\activate
+python main.py
+```
+
 Backend runs at: http://localhost:8000
 
 **Terminal 2 - Frontend:**

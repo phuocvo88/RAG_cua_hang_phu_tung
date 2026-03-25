@@ -34,17 +34,21 @@ def read_api_key_from_file(file_path):
     return None
 
 def get_google_api_key():
-    key_file_path = r"F:\side_projects\keys\Google key\RAG_cua_hang_phu_tung.txt"
-    api_key = read_api_key_from_file(key_file_path)
+    # Try environment variable first (cross-platform)
+    api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
-        api_key = os.environ.get("GOOGLE_API_KEY")
+        # Try relative path as fallback (optional)
+        key_file_path = os.path.join(".", "keys", "google_api_key.txt")
+        api_key = read_api_key_from_file(key_file_path)
     return api_key
 
 def get_anthropic_api_key():
-    key_file_path = r"F:\side_projects\keys\Claude key\ragkt.txt"
-    api_key = read_api_key_from_file(key_file_path)
+    # Try environment variable first (cross-platform)
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+        # Try relative path as fallback (optional)
+        key_file_path = os.path.join(".", "keys", "anthropic_api_key.txt")
+        api_key = read_api_key_from_file(key_file_path)
     return api_key
 
 # ==========================================

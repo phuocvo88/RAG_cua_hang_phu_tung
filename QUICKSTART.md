@@ -8,9 +8,16 @@
 
 ## Step 1: Initialize Database
 
+**Linux/Mac:**
 ```bash
 cd backend
-venv/Scripts/python.exe create_feedback_table.py
+python create_feedback_table.py
+```
+
+**Windows:**
+```powershell
+cd backend
+venv\Scripts\python.exe create_feedback_table.py
 ```
 
 Expected output:
@@ -21,9 +28,18 @@ Expected output:
 
 ## Step 2: Start Backend Server
 
+**Linux/Mac:**
 ```bash
 cd backend
-venv/Scripts/python.exe main.py
+source venv/bin/activate
+python main.py
+```
+
+**Windows:**
+```powershell
+cd backend
+venv\Scripts\activate
+python main.py
 ```
 
 Server will start at: `http://localhost:8000`
@@ -75,12 +91,28 @@ This will run all API endpoint tests automatically.
 ## Quick Commands Reference
 
 ### Backend
+
+**Linux/Mac:**
 ```bash
 # Create database table
-venv/Scripts/python.exe create_feedback_table.py
+python create_feedback_table.py
+
+# Start server (with venv activated)
+source venv/bin/activate
+python main.py
+
+# Run tests
+python test_knowledge_feedback.py
+```
+
+**Windows:**
+```powershell
+# Create database table
+venv\Scripts\python.exe create_feedback_table.py
 
 # Start server
-venv/Scripts/python.exe main.py
+venv\Scripts\activate
+python main.py
 
 # Run tests
 python test_knowledge_feedback.py
@@ -117,7 +149,9 @@ npm run build
 ### Frontend won't start
 - Check if port 3000 is available
 - Run `npm install` to ensure all dependencies are installed
-- Clear `.next` folder and restart: `rm -rf .next && npm run dev`
+- Clear `.next` folder and restart:
+  - Linux/Mac: `rm -rf .next && npm run dev`
+  - Windows: `rmdir /s .next` then `npm run dev`
 
 ### Database errors
 - Make sure `backend/database/store.db` exists
