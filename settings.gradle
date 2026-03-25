@@ -1,0 +1,3 @@
+rootProject.name = 'RAG_cua_hang_phu_tung'
+include 'backend'
+include 'frontend'
