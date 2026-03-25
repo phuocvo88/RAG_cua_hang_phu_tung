@@ -1,0 +1,42 @@
+plugins {
+    id 'base'
+    id 'com.github.node-gradle.node' version '7.0.2'
+}
+
+node {
+    version = '20.11.0'
+    npmVersion = '10.2.4'
+    download = true
+}
+
+task dev(type: NpmTask) {
+    group = 'Application'
+    description = 'Run Next.js development server'
+    dependsOn npmInstall
+    args = ['run', 'dev']
+}
+
+task buildApp(type: NpmTask) {
+    group = 'Build'
+    description = 'Build Next.js application'
+    dependsOn npmInstall
+    args = ['run', 'build']
+}
+
+task start(type: NpmTask) {
+    group = 'Application'
+    description = 'Start Next.js production server'
+    dependsOn buildApp
+    args = ['run', 'start']
+}
+
+task lint(type: NpmTask) {
+    group = 'Verification'
+    description = 'Run ESLint on Next.js code'
+    dependsOn npmInstall
+    args = ['run', 'lint']
+}
+
+clean {
+    delete '.next', 'out'
+}

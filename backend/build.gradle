@@ -1,0 +1,66 @@
+plugins {
+    id 'base'
+}
+
+def venvDir = project.file('venv')
+def pythonPath = venvDir.exists() ? 
+    (org.gradle.internal.os.OperatingSystem.current().isWindows() ? project.file('venv/Scripts/python.exe').absolutePath : project.file('venv/bin/python').absolutePath) : 
+    'python'
+
+task printPythonPath {
+    doLast {
+        println "Python Path: ${pythonPath}"
+    }
+}
+
+task setupVenv(type: Exec) {
+    group = 'Python'
+    description = 'Setup Python virtual environment'
+    commandLine 'python', '-m', 'venv', 'venv'
+    onlyIf { !venvDir.exists() }
+}
+
+task installDependencies(type: Exec) {
+    group = 'Python'
+    description = 'Install Python dependencies from requirements.txt'
+    dependsOn setupVenv
+    commandLine pythonPath, '-m', 'pip', 'install', '-r', 'requirements.txt'
+}
+
+task run(type: Exec) {
+    group = 'Application'
+    description = 'Run FastAPI server'
+    dependsOn installDependencies
+    commandLine pythonPath, '-m', 'uvicorn', 'main:app', '--reload'
+}
+
+task test(type: Exec) {
+    group = 'Verification'
+    description = 'Run Python tests'
+    dependsOn installDependencies
+    workingDir projectDir
+    commandLine pythonPath, 'test_rag.py' // Default to one test, can be expanded
+}
+
+clean {
+    delete '__pycache__', '.pytest_cache'
+}
+
+task lint(type: Exec) {
+    group = 'Verification'
+    description = 'Run Python linting (placeholder - install flake8 or pylint)'
+    dependsOn installDependencies
+    workingDir projectDir
+    commandLine pythonPath, '-m', 'pip', 'list'
+    doFirst {
+        println "Note: Install flake8 or pylint for actual linting"
+    }
+}
+
+task listPackages(type: Exec) {
+    group = 'Python'
+    description = 'List installed Python packages'
+    dependsOn setupVenv
+    workingDir projectDir
+    commandLine pythonPath, '-m', 'pip', 'list'
+}

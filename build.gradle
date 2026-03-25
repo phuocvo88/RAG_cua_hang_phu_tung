@@ -1,0 +1,36 @@
+plugins {
+    id 'base'
+}
+
+allprojects {
+    group = 'com.phuocvo'
+    version = '1.0.0'
+}
+
+task runAll {
+    group = 'Application'
+    description = 'Run both backend and frontend development servers'
+    dependsOn ':backend:run', ':frontend:dev'
+}
+
+task buildAll {
+    group = 'Build'
+    description = 'Build both backend and frontend'
+    dependsOn ':backend:installDependencies', ':frontend:buildApp'
+}
+
+clean {
+    dependsOn ':backend:clean', ':frontend:clean'
+}
+
+task testAll {
+    group = 'Verification'
+    description = 'Run all tests'
+    dependsOn ':backend:test'
+}
+
+task lintAll {
+    group = 'Verification'
+    description = 'Run all linting tasks'
+    dependsOn ':backend:lint', ':frontend:lint'
+}

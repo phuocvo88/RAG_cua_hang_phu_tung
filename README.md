@@ -28,10 +28,51 @@ Frontend (Next.js) ←→ Backend (FastAPI) ←→ Databases
 
 ### Prerequisites
 - Python 3.11+
-- Node.js 18+
+- Node.js 18+ (or let Gradle download it)
+- Java 17+ (for Gradle build tool)
 - Git
 
-### Installation
+### Installation Methods
+
+#### Option 1: Using Gradle (Recommended)
+
+Gradle automates the entire build process for both backend and frontend.
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd RAG_cua_hang_phu_tung
+   ```
+
+2. **Setup everything with one command:**
+   ```bash
+   # Windows
+   .\gradlew-fixed.bat buildAll
+
+   # Linux/Mac
+   ./gradlew buildAll
+   ```
+
+3. **Configure API Keys:**
+   - Create `.env` file in backend directory
+   - Add your API keys:
+     ```
+     GOOGLE_API_KEY=your_google_key
+     ANTHROPIC_API_KEY=your_anthropic_key
+     ```
+
+4. **Run the application:**
+   ```bash
+   # Windows
+   .\gradlew-fixed.bat runAll
+
+   # Linux/Mac
+   ./gradlew runAll
+   ```
+
+See [Gradle Usage Guide](other_information/Gradle%20Usage%20Guide.md) for detailed Gradle commands.
+
+#### Option 2: Manual Installation
 
 1. **Clone the repository:**
    ```bash
@@ -179,6 +220,7 @@ API documentation: http://localhost:8000/docs (when backend is running)
 ## 📚 Documentation
 
 - **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[Gradle Usage Guide](other_information/Gradle%20Usage%20Guide.md)** - Complete Gradle build tool guide
 - **[KNOWLEDGE_FEEDBACK_IMPLEMENTATION.md](KNOWLEDGE_FEEDBACK_IMPLEMENTATION.md)** - Detailed implementation guide
 - **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Project summary and statistics
 
