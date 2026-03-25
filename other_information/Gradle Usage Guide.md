@@ -10,91 +10,175 @@ This guide explains how to use Gradle to build, test, and run the RAG project.
 
 ## Quick Start
 
-### Windows
+**Linux/Mac:**
 ```bash
-# Use the fixed wrapper (handles JAVA_HOME issues)
-.\gradlew-fixed.bat tasks
+# Make gradlew executable (first time only)
+chmod +x gradlew
 
-# Or set JAVA_HOME first, then use normal wrapper
-set JAVA_HOME=C:\Program Files\Java\jdk-17
-.\gradlew tasks
+# List all available tasks
+./gradlew tasks
 ```
 
-### Linux/Mac
-```bash
-./gradlew tasks
+**Windows:**
+```powershell
+# Use the normal wrapper
+.\gradlew.bat tasks
+
+# Or use the fixed wrapper (handles JAVA_HOME issues)
+.\gradlew-fixed.bat tasks
 ```
 
 ## Important Note: JAVA_HOME
 
-If you encounter errors about invalid JAVA_HOME, use the `gradlew-fixed.bat` wrapper on Windows, which automatically sets the correct Java path.
+**Windows:** If you encounter errors about invalid JAVA_HOME, use the `gradlew-fixed.bat` wrapper on Windows, which automatically sets the correct Java path.
+
+**Linux/Mac:** Ensure Java 17+ is installed and JAVA_HOME is set:
+```bash
+# Check Java version
+java -version
+
+# Set JAVA_HOME (add to ~/.bashrc or ~/.zshrc for persistence)
+export JAVA_HOME=/path/to/jdk-17
+```
 
 ## Available Tasks
 
 ### Application Tasks
 
 Run the entire application:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat runAll         # Run both backend and frontend
+./gradlew runAll         # Run both backend and frontend
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat runAll     # Or .\gradlew-fixed.bat runAll
 ```
 
 Run individual components:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :backend:run   # Run FastAPI backend only
-.\gradlew-fixed.bat :frontend:dev  # Run Next.js frontend only
-.\gradlew-fixed.bat :frontend:start # Run Next.js in production mode
+./gradlew :backend:run   # Run FastAPI backend only
+./gradlew :frontend:dev  # Run Next.js frontend only
+./gradlew :frontend:start # Run Next.js in production mode
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :backend:run
+.\gradlew.bat :frontend:dev
+.\gradlew.bat :frontend:start
 ```
 
 ### Build Tasks
 
 Build the entire project:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat buildAll       # Build backend deps + frontend
+./gradlew buildAll       # Build backend deps + frontend
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat buildAll
 ```
 
 Build individual components:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :backend:installDependencies  # Install Python packages
-.\gradlew-fixed.bat :frontend:buildApp            # Build Next.js for production
+./gradlew :backend:installDependencies  # Install Python packages
+./gradlew :frontend:buildApp            # Build Next.js for production
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :backend:installDependencies
+.\gradlew.bat :frontend:buildApp
 ```
 
 ### Verification Tasks
 
 Run all tests and linting:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat testAll        # Run all tests
-.\gradlew-fixed.bat lintAll        # Run all linting
+./gradlew testAll        # Run all tests
+./gradlew lintAll        # Run all linting
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat testAll
+.\gradlew.bat lintAll
 ```
 
 Run individual verifications:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :backend:test  # Run Python tests
-.\gradlew-fixed.bat :backend:lint  # Lint Python code
-.\gradlew-fixed.bat :frontend:lint # Lint Next.js code
+./gradlew :backend:test  # Run Python tests
+./gradlew :backend:lint  # Lint Python code
+./gradlew :frontend:lint # Lint Next.js code
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :backend:test
+.\gradlew.bat :backend:lint
+.\gradlew.bat :frontend:lint
 ```
 
 ### Cleanup Tasks
 
 Clean build artifacts:
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat clean          # Clean all build artifacts
-.\gradlew-fixed.bat :backend:clean # Clean backend only
-.\gradlew-fixed.bat :frontend:clean # Clean frontend only
+./gradlew clean          # Clean all build artifacts
+./gradlew :backend:clean # Clean backend only
+./gradlew :frontend:clean # Clean frontend only
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat clean
+.\gradlew.bat :backend:clean
+.\gradlew.bat :frontend:clean
 ```
 
 ### Python-Specific Tasks
 
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :backend:setupVenv           # Create Python virtual environment
-.\gradlew-fixed.bat :backend:listPackages        # List installed Python packages
-.\gradlew-fixed.bat :backend:printPythonPath     # Show Python interpreter path
+./gradlew :backend:setupVenv           # Create Python virtual environment
+./gradlew :backend:listPackages        # List installed Python packages
+./gradlew :backend:printPythonPath     # Show Python interpreter path
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :backend:setupVenv
+.\gradlew.bat :backend:listPackages
+.\gradlew.bat :backend:printPythonPath
 ```
 
 ### Node-Specific Tasks
 
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :frontend:npmInstall  # Install Node packages
-.\gradlew-fixed.bat :frontend:nodeSetup   # Download and install Node.js
+./gradlew :frontend:npmInstall  # Install Node packages
+./gradlew :frontend:nodeSetup   # Download and install Node.js
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :frontend:npmInstall
+.\gradlew.bat :frontend:nodeSetup
 ```
 
 ## Project Structure
@@ -156,74 +240,156 @@ include 'frontend'
 **Problem:** Task fails because venv doesn't exist
 
 **Solution:**
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :backend:setupVenv
+./gradlew :backend:setupVenv
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :backend:setupVenv
 ```
 
 ### Node Modules Not Installed
 **Problem:** Frontend tasks fail
 
 **Solution:**
+
+**Linux/Mac:**
 ```bash
-.\gradlew-fixed.bat :frontend:npmInstall
+./gradlew :frontend:npmInstall
+```
+
+**Windows:**
+```powershell
+.\gradlew.bat :frontend:npmInstall
 ```
 
 ## Common Workflows
 
 ### First Time Setup
+
+**Linux/Mac:**
 ```bash
 # 1. Setup backend
-.\gradlew-fixed.bat :backend:setupVenv
-.\gradlew-fixed.bat :backend:installDependencies
+./gradlew :backend:setupVenv
+./gradlew :backend:installDependencies
 
 # 2. Setup frontend
-.\gradlew-fixed.bat :frontend:npmInstall
+./gradlew :frontend:npmInstall
 
 # 3. Run everything
-.\gradlew-fixed.bat runAll
+./gradlew runAll
+```
+
+**Windows:**
+```powershell
+# 1. Setup backend
+.\gradlew.bat :backend:setupVenv
+.\gradlew.bat :backend:installDependencies
+
+# 2. Setup frontend
+.\gradlew.bat :frontend:npmInstall
+
+# 3. Run everything
+.\gradlew.bat runAll
 ```
 
 ### Daily Development
+
+**Linux/Mac:**
 ```bash
 # Clean and rebuild
-.\gradlew-fixed.bat clean buildAll
+./gradlew clean buildAll
 
 # Run tests and lint
-.\gradlew-fixed.bat testAll lintAll
+./gradlew testAll lintAll
 
 # Start development servers
-.\gradlew-fixed.bat runAll
+./gradlew runAll
+```
+
+**Windows:**
+```powershell
+# Clean and rebuild
+.\gradlew.bat clean buildAll
+
+# Run tests and lint
+.\gradlew.bat testAll lintAll
+
+# Start development servers
+.\gradlew.bat runAll
 ```
 
 ### Production Build
+
+**Linux/Mac:**
 ```bash
 # Build everything for production
-.\gradlew-fixed.bat buildAll
+./gradlew buildAll
 
 # Run in production mode
-.\gradlew-fixed.bat :frontend:start
+./gradlew :frontend:start
+```
+
+**Windows:**
+```powershell
+# Build everything for production
+.\gradlew.bat buildAll
+
+# Run in production mode
+.\gradlew.bat :frontend:start
 ```
 
 ## Tips
 
 1. **Parallel Execution:** Add `--parallel` to run independent tasks concurrently
+
+   **Linux/Mac:**
    ```bash
-   .\gradlew-fixed.bat buildAll --parallel
+   ./gradlew buildAll --parallel
+   ```
+
+   **Windows:**
+   ```powershell
+   .\gradlew.bat buildAll --parallel
    ```
 
 2. **Skip Tests:** Use `-x test` to skip tests during build
+
+   **Linux/Mac:**
    ```bash
-   .\gradlew-fixed.bat buildAll -x test
+   ./gradlew buildAll -x test
+   ```
+
+   **Windows:**
+   ```powershell
+   .\gradlew.bat buildAll -x test
    ```
 
 3. **Verbose Output:** Use `--info` or `--debug` for detailed logs
+
+   **Linux/Mac:**
    ```bash
-   .\gradlew-fixed.bat run --info
+   ./gradlew run --info
+   ```
+
+   **Windows:**
+   ```powershell
+   .\gradlew.bat run --info
    ```
 
 4. **Continuous Build:** Use `--continuous` to automatically rebuild on file changes
+
+   **Linux/Mac:**
    ```bash
-   .\gradlew-fixed.bat buildAll --continuous
+   ./gradlew buildAll --continuous
+   ```
+
+   **Windows:**
+   ```powershell
+   .\gradlew.bat buildAll --continuous
    ```
 
 ## IDE Integration
