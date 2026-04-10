@@ -11,15 +11,47 @@ load_dotenv()
 from google import genai
 from google.genai import types
 from llama_index.core import StorageContext, load_index_from_storage, Settings, Document
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core.embeddings import BaseEmbedding
 from llama_index.llms.anthropic import Anthropic
-from llama_index.llms.gemini import Gemini
+from pydantic import Field
+from typing import List, Any
 
 # ==========================================
-# SETUP EMBEDDING (LOCAL, không cần API key)
+# CUSTOM GEMINI EMBEDDING (dùng google-genai SDK, không cần PyTorch)
 # ==========================================
-embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
-Settings.embed_model = embed_model
+class GeminiDirectEmbedding(BaseEmbedding):
+    api_key: str = Field(description="Google API key")
+
+    def __init__(self, api_key: str, **kwargs):
+        super().__init__(api_key=api_key, **kwargs)
+
+    @classmethod
+    def class_name(cls) -> str:
+        return "GeminiDirectEmbedding"
+
+    def _embed(self, text: str) -> List[float]:
+        import requests
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key={self.api_key}"
+        resp = requests.post(url, json={"content": {"parts": [{"text": text}]}})
+        if not resp.ok:
+            raise RuntimeError(f"Embedding API error: {resp.status_code} {resp.json().get('error', {}).get('message', '')}")
+        return resp.json()["embedding"]["values"]
+
+    def _get_query_embedding(self, query: str) -> List[float]:
+        return self._embed(query)
+
+    def _get_text_embedding(self, text: str) -> List[float]:
+        return self._embed(text)
+
+    async def _aget_query_embedding(self, query: str) -> List[float]:
+        return self._get_query_embedding(query)
+
+    async def _aget_text_embedding(self, text: str) -> List[float]:
+        return self._get_text_embedding(text)
+
+_google_api_key = os.environ.get("GOOGLE_API_KEY", "")
+if _google_api_key:
+    Settings.embed_model = GeminiDirectEmbedding(api_key=_google_api_key)
 
 # ==========================================
 # ĐỌC API KEY TỪ FILE (Bảo mật)
@@ -113,16 +145,20 @@ def extract_keywords_from_query(query: str) -> list:
 # ==========================================
 def search_knowledge(query: str) -> str:
     """Tìm kiếm kinh nghiệm và thông tin tương thích trong Vector DB"""
-    storage_context = StorageContext.from_defaults(persist_dir="./database/storage")
-    index = load_index_from_storage(storage_context)
-    retriever = index.as_retriever(similarity_top_k=3)
-    nodes = retriever.retrieve(query)
-    
-    if not nodes:
-        return "Khong tim thay thong tin tuong thich lien quan."
-    
-    result = "\n".join([n.text for n in nodes])
-    return result
+    storage_dir = "./database/storage"
+    if not os.path.exists(storage_dir) or not os.listdir(storage_dir):
+        return ""
+    try:
+        storage_context = StorageContext.from_defaults(persist_dir=storage_dir)
+        index = load_index_from_storage(storage_context)
+        retriever = index.as_retriever(similarity_top_k=3)
+        nodes = retriever.retrieve(query)
+        if not nodes:
+            return ""
+        return "\n".join([n.text for n in nodes])
+    except Exception as e:
+        print(f"Vector search unavailable: {e}")
+        return ""
 
 # ==========================================
 # 3. RAG QUERY FUNCTION
