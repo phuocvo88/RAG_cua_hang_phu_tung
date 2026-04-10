@@ -41,7 +41,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/chat", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -178,7 +178,7 @@ function FeedbackModal({ message, onClose }: { message: Message; onClose: () => 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:8000/api/knowledge/feedback", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/knowledge/feedback`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

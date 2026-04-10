@@ -31,7 +31,7 @@ export default function AdminKnowledgeReview() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/api/admin/knowledge/pending?status=${statusFilter}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/admin/knowledge/pending?status=${statusFilter}`
       );
       if (!response.ok) {
         throw new Error("Không thể tải danh sách góp ý");
@@ -57,8 +57,8 @@ export default function AdminKnowledgeReview() {
     try {
       const endpoint =
         actionType === "approve"
-          ? `http://localhost:8000/api/admin/knowledge/${selectedFeedback.id}/approve`
-          : `http://localhost:8000/api/admin/knowledge/${selectedFeedback.id}/reject`;
+          ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/admin/knowledge/${selectedFeedback.id}/approve`
+          : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/admin/knowledge/${selectedFeedback.id}/reject`;
 
       const response = await fetch(endpoint, {
         method: "POST",
