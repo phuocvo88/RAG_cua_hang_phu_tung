@@ -62,8 +62,8 @@ def import_products_from_csv(csv_path, db_path):
                 # Parse price (remove any non-numeric characters except digits)
                 price = int(row['Gia'].strip())
 
-                # Parse minimum quantity
-                min_qty = int(row['SL_Toi_Thieu'].strip()) if row['SL_Toi_Thieu'].strip() else 0
+                # Parse minimum quantity (CSV stores as float e.g. "5.0")
+                min_qty = int(float(row['SL_Toi_Thieu'].strip())) if row['SL_Toi_Thieu'].strip() else 0
 
                 # Insert into database
                 cursor.execute('''
