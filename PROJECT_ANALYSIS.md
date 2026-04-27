@@ -109,88 +109,86 @@ class GeminiDirectEmbedding(BaseEmbedding):
 
 ---
 
-## Bug: AI Answers Correctly Locally but Not on Vercel/Render
-
-### Root Cause 1 — Deployed Database Has Only 50 Products
-
-The `store.db` committed to git was created during Phase 0 seeding with only **50 products**. Locally, `import_products.py` was run against `products.csv` which has **933 products** — but neither the updated `store.db` nor the new `products.csv` was committed.
-
-```
-State                  | Products | Source
------------------------|----------|---------------------------
-git / Render (deployed)| 50       | seed_data.py (Mar 20)
-Local machine          | 933+     | import_products.py + products.csv
-```
-
-When Render deploys, it uses the git version of `store.db`. SQL search finds almost nothing → AI has no product data → answers are generic or wrong.
-
-**Evidence:**
-```bash
-# What's in git
-git ls-files backend/database/
-# → backend/database/store.db  (36KB, 50 products)
-
-# Local products.csv
-wc -l products.csv
-# → 934 lines (header + 933 products)  ← modified, NOT committed
-```
-
-### Root Cause 2 — `NEXT_PUBLIC_API_URL` Not Baked In at Build Time
-
-Next.js embeds `NEXT_PUBLIC_*` environment variables **at build time**, not at runtime. If Vercel built the frontend before the env var was configured in the Vercel dashboard, the variable is `undefined` and the code falls back to:
-
-```typescript
-const response = await fetch(
-  `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/chat`
-);
-```
-
-From the browser on Vercel, `http://localhost:8000` is unreachable — requests fail silently or throw a network error. The AI is never actually called.
-
-The commit `73efdce` ("Trigger Vercel rebuild to apply NEXT_PUBLIC_API_URL env var") confirms this was discovered, but a rebuild only works if the env var was already set in the Vercel dashboard before that build.
-
 ---
 
-## Fixes Required
+### Phase 6 — Production Bug Fixes (Apr 27, 2026)
+**Commits:** `2ea4341`, `94553f5`
 
-### Fix 1 — Sync the Product Database
+Diagnosed and fixed two bugs causing the deployed AI to answer incorrectly while local worked fine.
 
-**Option A — Commit the updated database (quick fix):**
-```bash
-# Run the importer locally first if not done yet
-cd backend && python import_products.py
+#### Bug 1 — Deployed Database Had Only 50 Products
 
-# Then commit both the DB and the CSV
-git add backend/database/store.db products.csv
-git commit -m "Update product catalog: import 933 products from CSV"
-git push
+**Root cause:** The `store.db` in git was created by `seed_data.py` with only 50 hardcoded products. Locally, `import_products.py` had been run against `products.csv` (933 products) but neither the updated DB nor the CSV was ever committed. Render deployed the old 50-product DB → SQL search found almost nothing → AI gave wrong or generic answers.
+
+**Diagnosis:**
+```
+State                   | Products | Source
+------------------------|----------|-----------------------------
+git / Render (deployed) | 50       | seed_data.py (Mar 20)
+Local machine           | 891      | import_products.py + products.csv
 ```
 
-**Option B — Auto-import on startup (recommended for production):**
+**Fix applied (`2ea4341`):**
+- Fixed a crash in `import_products.py`: `SL_Toi_Thieu` column stores floats like `"5.0"` but the script called `int()` directly → changed to `int(float(...))`
+- Ran the importer locally → `store.db` grew from 36 KB (50 products) to 151 KB (891 products)
+- Committed updated `store.db` and full `products.csv` to git
+- Updated `backend/Procfile` to auto-import on every Render deploy:
+  ```
+  web: python import_products.py && python main.py
+  ```
+- Added `frontend/vercel.json` with explicit Next.js build config
 
-Edit `backend/Procfile`:
+#### Bug 2 — Keyword Extraction Cut Off SKUs and Matched Wrong Products
+
+**Root cause:** Two bugs in `extract_keywords_from_query` in `rag_engine.py`:
+
+1. **`[:5]` hard limit**: The full query string was inserted at index 0, pushing all actual keywords down. For a query like *"giá và tên của sản phẩm HD-008"*, the word `hd-008` ended up at index 6 — silently dropped. The SQL loop never tried it.
+
+2. **Missing accented stopwords**: Common Vietnamese question words with accents (`giá`, `sản`, `phẩm`, `của`, `tên`) were not in the stopwords set (which only had unaccented forms). These survived filtering, were tried first in the SQL LIKE loop, accidentally matched unrelated products (e.g. the SIM product), and caused the loop to `break` early with a wrong result.
+
+**Example of the failure:**
+
+| Query | Keywords tried (old) | First SQL match |
+|---|---|---|
+| "giá và tên của sản phẩm HD-008" | `[full_query, 'giá', 'tên', 'của', 'sản']` | wrong product via `'sản'` |
+| "Rùa đen bóng có gon Future Neo 2005" | `[full_query, 'sản', 'phẩm', 'giá', 'của']` | wrong product via `'sản'` |
+
+**Fix applied (`94553f5`):**
+- Added accented Vietnamese filler/question words to the stopwords set
+- Removed the `[:5]` cap entirely
+- Removed the full query from the keyword list (it never matches a LIKE search usefully)
+- Sorted keywords by **length descending** — longer words (SKUs, model names) are tried first
+
+**Example after fix:**
+
+| Query | Keywords tried (new) | First SQL match |
+|---|---|---|
+| "giá và tên của sản phẩm HD-008" | `['hd-008']` | HD-008 → Ma phanh truoc PCX, 180,000 VND ✓ |
+| "Rùa đen bóng có gon Future Neo 2005" | `['future', 'bóng', '2005', 'rùa', ...]` | Future Neo products → SKU `83600KYL700ZD`, 85,000 VND ✓ |
+
+**Code change summary:**
+
+```python
+# Before
+stopwords = { 'cho', 'toi', ... }  # unaccented only
+keywords.insert(0, query.strip())   # full query at index 0
+return keywords[:5]                 # SKUs at position 6+ silently dropped
+
+# After
+stopwords = { 'cho', 'toi', ..., 'và', 'của', 'sản', 'phẩm', 'giá', 'tên', ... }
+keywords.sort(key=len, reverse=True)  # longest (most specific) first
+return keywords if keywords else [query.strip()]  # no cap, no full-query pollution
 ```
-web: python import_products.py && python main.py
+
+#### Environment Variable Config (already in place, confirmed)
+
+`NEXT_PUBLIC_API_URL` was already set correctly in Vercel dashboard (`https://rag-cua-hang-phu-tung.onrender.com`) for All Environments before the Phase 5 rebuild. No action needed.
+
+Render environment variables required:
 ```
-
-This ensures the DB is always populated from the CSV on each Render deploy, even if the DB file gets reset.
-
-### Fix 2 — Verify Vercel Environment Variable
-
-1. Go to Vercel dashboard → Project → **Settings** → **Environment Variables**
-2. Confirm `NEXT_PUBLIC_API_URL` is set to your Render backend URL:
-   ```
-   NEXT_PUBLIC_API_URL=https://your-app-name.onrender.com
-   ```
-3. **Redeploy** (not just rebuild) from the Vercel dashboard to bake the value in
-
-### Fix 3 — Verify Render Environment Variables
-
-Confirm these are set in Render dashboard → Environment:
-```
-GOOGLE_API_KEY=your_google_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key  (if using Claude)
-PORT=8000  (Render sets this automatically)
+GOOGLE_API_KEY=<set in Render dashboard>
+ANTHROPIC_API_KEY=<set in Render dashboard, optional>
+PORT=<set automatically by Render>
 ```
 
 ---
@@ -228,4 +226,4 @@ PORT=8000  (Render sets this automatically)
 
 ---
 
-*Generated: 2026-04-26*
+*Generated: 2026-04-26 | Updated: 2026-04-27*
