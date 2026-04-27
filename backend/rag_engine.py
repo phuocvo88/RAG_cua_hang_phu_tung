@@ -118,27 +118,29 @@ def search_sql_by_keyword(keyword: str, limit: int = 10) -> str:
 
 def extract_keywords_from_query(query: str) -> list:
     """
-    Extract potential product keywords from user query
-    Simple approach: split query into words and filter common Vietnamese words
+    Extract product keywords from user query, ordered by specificity (longest first).
+    Longer words (SKUs, model names) are tried before short generic words.
     """
-    # Common Vietnamese stopwords to ignore
     stopwords = {
+        # Unaccented
         'cho', 'toi', 'biet', 've', 'cua', 'va', 'co', 'khong', 'la', 'ma', 'san', 'pham',
         'gia', 'bao', 'nhieu', 'nao', 'nay', 'kia', 'het', 'hang', 'duoc', 'dung', 'nhu',
-        'the', 'voi', 'tu', 'o', 'trong', 'tren', 'duoi', 'giup', 'tim', 'kiem', 'xem'
+        'the', 'voi', 'tu', 'o', 'trong', 'tren', 'duoi', 'giup', 'tim', 'kiem', 'xem',
+        # Accented Vietnamese question/filler words
+        'và', 'của', 'sản', 'phẩm', 'giá', 'tên', 'mã', 'có', 'là', 'không', 'hàng',
+        'tôi', 'biết', 'về', 'bao', 'nhiêu', 'nào', 'này', 'được', 'dùng', 'như',
+        'thế', 'với', 'từ', 'trong', 'trên', 'dưới', 'giúp', 'tìm', 'kiếm', 'xem',
+        'cho', 'hỏi', 'muốn', 'cần', 'tra', 'cứu',
     }
 
-    # Normalize and split query
     words = query.lower().split()
-
-    # Extract meaningful keywords (length > 2 and not in stopwords)
     keywords = [w for w in words if len(w) > 2 and w not in stopwords]
 
-    # Also try the full query as a keyword
-    if query.strip():
-        keywords.insert(0, query.strip())
+    # Sort by length descending: longer = more specific (SKUs, model names come first)
+    keywords.sort(key=len, reverse=True)
 
-    return keywords[:5]  # Return top 5 keywords
+    # Fall back to full query only if no keywords extracted
+    return keywords if keywords else [query.strip()]
 
 # ==========================================
 # 2. VECTOR SEARCH: Tìm kiến thức tương thích
