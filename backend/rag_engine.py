@@ -86,25 +86,8 @@ def get_anthropic_api_key():
 # ==========================================
 # 1. SQL SEARCH: Tìm sản phẩm trong CSDL
 # ==========================================
-def search_sql_by_keyword(keyword: str, limit: int = 10) -> str:
-    """Tìm kiếm sản phẩm trong SQLite theo từ khóa"""
-    conn = sqlite3.connect('./database/store.db')
-    cursor = conn.cursor()
-
-    # Search in name, SKU, category, brand, and notes
-    cursor.execute('''
-        SELECT sku, name, brand, category, price, in_stock, promotion, warranty, notes
-        FROM products
-        WHERE name LIKE ? OR sku LIKE ? OR category LIKE ? OR brand LIKE ? OR notes LIKE ?
-        ORDER BY in_stock DESC, price ASC
-        LIMIT ?
-    ''', (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', limit))
-    rows = cursor.fetchall()
-    conn.close()
-
-    if not rows:
-        return "Khong tim thay san pham phu hop trong co so du lieu."
-
+def _format_sql_rows(rows) -> str:
+    """Format SQL result rows into a readable string."""
     result_lines = ["Thong tin san pham tim duoc:"]
     for row in rows:
         sku, name, brand, category, price, in_stock, promotion, warranty, notes = row
@@ -115,6 +98,44 @@ def search_sql_by_keyword(keyword: str, limit: int = 10) -> str:
             f"- Ma: {sku} | {name} [{brand}] | Gia: {price:,} VND{promo_text} | {stock_status}{warranty_text}"
         )
     return "\n".join(result_lines)
+
+def search_sql_by_keyword(keyword: str, limit: int = 10) -> str:
+    """Tìm kiếm sản phẩm trong SQLite theo một từ khóa."""
+    conn = sqlite3.connect('./database/store.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT sku, name, brand, category, price, in_stock, promotion, warranty, notes
+        FROM products
+        WHERE name LIKE ? OR sku LIKE ? OR category LIKE ? OR brand LIKE ? OR notes LIKE ?
+        ORDER BY in_stock DESC
+        LIMIT ?
+    ''', (f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', f'%{keyword}%', limit))
+    rows = cursor.fetchall()
+    conn.close()
+    if not rows:
+        return "Khong tim thay san pham phu hop trong co so du lieu."
+    return _format_sql_rows(rows)
+
+def search_sql_by_multi_keywords(keywords: list, limit: int = 10) -> str:
+    """Tìm kiếm sản phẩm yêu cầu TẤT CẢ từ khóa xuất hiện trong tên sản phẩm (AND search)."""
+    if not keywords:
+        return "Khong tim thay san pham phu hop trong co so du lieu."
+    conn = sqlite3.connect('./database/store.db')
+    cursor = conn.cursor()
+    conditions = ' AND '.join(['name LIKE ?' for _ in keywords])
+    params = [f'%{kw}%' for kw in keywords] + [limit]
+    cursor.execute(f'''
+        SELECT sku, name, brand, category, price, in_stock, promotion, warranty, notes
+        FROM products
+        WHERE {conditions}
+        ORDER BY in_stock DESC
+        LIMIT ?
+    ''', params)
+    rows = cursor.fetchall()
+    conn.close()
+    if not rows:
+        return "Khong tim thay san pham phu hop trong co so du lieu."
+    return _format_sql_rows(rows)
 
 def extract_keywords_from_query(query: str) -> list:
     """
@@ -174,16 +195,24 @@ def query_rag_system(user_query: str, provider: str = "google") -> str:
     keywords = extract_keywords_from_query(user_query)
 
     sql_context = ""
-    for kw in keywords:
-        result = search_sql_by_keyword(kw)
+
+    # Step 1: whole-phrase match (all keywords joined as one phrase)
+    if keywords:
+        phrase = ' '.join(keywords)
+        result = search_sql_by_keyword(phrase)
         if "Khong tim" not in result:
             sql_context = result
-            break
 
-    # If no results found, try a broader search with first word only
-    if not sql_context and keywords:
-        for word in keywords[1:]:  # Try individual words
-            result = search_sql_by_keyword(word)
+    # Step 2: multi-keyword AND match (all keywords must appear in name)
+    if not sql_context and len(keywords) > 1:
+        result = search_sql_by_multi_keywords(keywords)
+        if "Khong tim" not in result:
+            sql_context = result
+
+    # Step 3: individual keywords (longest/most specific first)
+    if not sql_context:
+        for kw in keywords:
+            result = search_sql_by_keyword(kw)
             if "Khong tim" not in result:
                 sql_context = result
                 break
